@@ -13,3 +13,6 @@ staticfiles/
 
 # Ambiente
 .env
+
+# Agent
+.claude/
