@@ -1,0 +1,915 @@
+{
+	"info": {
+		"_postman_id": "b1a9f0e2-1c3d-4e5f-8a7b-0c1d2e3f4a5b",
+		"name": "blogPie-v2",
+		"description": "Collection da API v2 do blogPie (Django REST Framework + SimpleJWT).\n\n## Como usar\n1. Ajuste a variavel `base_url` se necessario (padrao: http://localhost:8000).\n2. Preencha `username` e `password` de um usuario existente (ou crie um em Users > Create user, que e publico).\n3. Rode **Auth > Login (obter token)**. O script de teste salva automaticamente `access_token` e `refresh_token`.\n4. As requisicoes autenticadas usam `Authorization: Bearer {{access_token}}` herdado da collection.\n\n## Permissoes\n- Criar usuario (POST /api/users/) e publico.\n- Categories, Posts e Comments: leitura (GET) publica, escrita exige token.\n- Demais acoes de Users exigem token.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "{{access_token}}",
+				"type": "string"
+			}
+		]
+	},
+	"item": [
+		{
+			"name": "Auth",
+			"item": [
+				{
+					"name": "Login (obter token)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    const data = pm.response.json();",
+									"    pm.collectionVariables.set('access_token', data.access);",
+									"    pm.collectionVariables.set('refresh_token', data.refresh);",
+									"    console.log('Tokens salvos nas variaveis da collection.');",
+									"} else {",
+									"    console.log('Falha no login:', pm.response.code);",
+									"}"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"auth": {
+							"type": "noauth"
+						},
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"username\": \"{{username}}\",\n    \"password\": \"{{password}}\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/login/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"login",
+								""
+							]
+						},
+						"description": "Recebe username + password e retorna os tokens `access` e `refresh`. O script de teste salva ambos automaticamente."
+					}
+				},
+				{
+					"name": "Refresh token",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    const data = pm.response.json();",
+									"    pm.collectionVariables.set('access_token', data.access);",
+									"    console.log('access_token renovado.');",
+									"}"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"auth": {
+							"type": "noauth"
+						},
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"refresh\": \"{{refresh_token}}\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/login/refresh/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"login",
+								"refresh",
+								""
+							]
+						},
+						"description": "Recebe o `refresh` token e devolve um novo `access` token."
+					}
+				}
+			]
+		},
+		{
+			"name": "Users",
+			"item": [
+				{
+					"name": "List users",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/users/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"users",
+								""
+							]
+						},
+						"description": "Lista usuarios (paginado, PAGE_SIZE=10). Exige autenticacao."
+					}
+				},
+				{
+					"name": "Create user (publico)",
+					"request": {
+						"method": "POST",
+						"auth": {
+							"type": "noauth"
+						},
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"username\": \"novo_usuario\",\n    \"password\": \"SenhaForte123\",\n    \"first_name\": \"Novo\",\n    \"last_name\": \"Usuario\",\n    \"email\": \"novo@example.com\",\n    \"age\": 30,\n    \"city\": \"Sao Paulo\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/users/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"users",
+								""
+							]
+						},
+						"description": "Cadastro de usuario. Endpoint publico (AllowAny). A senha e gravada com hash. Para enviar foto de perfil, use body form-data com o campo profile_photo."
+					}
+				},
+				{
+					"name": "Retrieve user",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/users/{{user_id}}/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"users",
+								"{{user_id}}",
+								""
+							]
+						},
+						"description": "Detalhe de um usuario. Exige autenticacao."
+					}
+				},
+				{
+					"name": "Update user (PUT)",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"username\": \"usuario_editado\",\n    \"first_name\": \"Editado\",\n    \"last_name\": \"Sobrenome\",\n    \"email\": \"editado@example.com\",\n    \"age\": 31,\n    \"city\": \"Rio de Janeiro\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/users/{{user_id}}/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"users",
+								"{{user_id}}",
+								""
+							]
+						},
+						"description": "Atualizacao completa. Inclua `password` no corpo se quiser trocar a senha."
+					}
+				},
+				{
+					"name": "Partial update user (PATCH)",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"city\": \"Belo Horizonte\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/users/{{user_id}}/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"users",
+								"{{user_id}}",
+								""
+							]
+						},
+						"description": "Atualizacao parcial."
+					}
+				},
+				{
+					"name": "Delete user",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/users/{{user_id}}/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"users",
+								"{{user_id}}",
+								""
+							]
+						},
+						"description": "Remove o usuario."
+					}
+				}
+			]
+		},
+		{
+			"name": "Categories",
+			"item": [
+				{
+					"name": "List categories",
+					"request": {
+						"method": "GET",
+						"auth": {
+							"type": "noauth"
+						},
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/categories/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"categories",
+								""
+							]
+						},
+						"description": "Lista categorias. Leitura publica."
+					}
+				},
+				{
+					"name": "Create category",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Tecnologia\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/categories/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"categories",
+								""
+							]
+						},
+						"description": "Cria categoria. `created_by` e definido automaticamente pelo usuario autenticado. Exige token."
+					}
+				},
+				{
+					"name": "Retrieve category",
+					"request": {
+						"method": "GET",
+						"auth": {
+							"type": "noauth"
+						},
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/categories/{{category_id}}/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"categories",
+								"{{category_id}}",
+								""
+							]
+						},
+						"description": "Detalhe da categoria. Leitura publica."
+					}
+				},
+				{
+					"name": "Update category (PUT)",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Tecnologia e Inovacao\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/categories/{{category_id}}/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"categories",
+								"{{category_id}}",
+								""
+							]
+						},
+						"description": "Atualiza a categoria. Exige token."
+					}
+				},
+				{
+					"name": "Partial update category (PATCH)",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Ciencia\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/categories/{{category_id}}/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"categories",
+								"{{category_id}}",
+								""
+							]
+						},
+						"description": "Atualizacao parcial. Exige token."
+					}
+				},
+				{
+					"name": "Delete category",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/categories/{{category_id}}/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"categories",
+								"{{category_id}}",
+								""
+							]
+						},
+						"description": "Remove a categoria. Exige token."
+					}
+				}
+			]
+		},
+		{
+			"name": "Posts",
+			"item": [
+				{
+					"name": "List posts",
+					"request": {
+						"method": "GET",
+						"auth": {
+							"type": "noauth"
+						},
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/posts/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"posts",
+								""
+							]
+						},
+						"description": "Lista postagens. Leitura publica."
+					}
+				},
+				{
+					"name": "List posts by category",
+					"request": {
+						"method": "GET",
+						"auth": {
+							"type": "noauth"
+						},
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/posts/?category={{category_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"posts",
+								""
+							],
+							"query": [
+								{
+									"key": "category",
+									"value": "{{category_id}}"
+								}
+							]
+						},
+						"description": "Filtra postagens por categoria (query param `category`). Leitura publica."
+					}
+				},
+				{
+					"name": "Create post",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"title\": \"Meu primeiro post\",\n    \"subtitle\": \"Um subtitulo\",\n    \"text\": \"Conteudo do post...\",\n    \"category\": {{category_id}}\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/posts/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"posts",
+								""
+							]
+						},
+						"description": "Cria postagem. `user` e definido automaticamente pelo usuario autenticado. `category` e opcional. Para enviar imagem, use body form-data com o campo image. Exige token."
+					}
+				},
+				{
+					"name": "Retrieve post",
+					"request": {
+						"method": "GET",
+						"auth": {
+							"type": "noauth"
+						},
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/posts/{{post_id}}/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"posts",
+								"{{post_id}}",
+								""
+							]
+						},
+						"description": "Detalhe da postagem. Leitura publica."
+					}
+				},
+				{
+					"name": "Update post (PUT)",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"title\": \"Post editado\",\n    \"subtitle\": \"Novo subtitulo\",\n    \"text\": \"Novo conteudo\",\n    \"category\": {{category_id}}\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/posts/{{post_id}}/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"posts",
+								"{{post_id}}",
+								""
+							]
+						},
+						"description": "Atualiza a postagem. Exige token."
+					}
+				},
+				{
+					"name": "Partial update post (PATCH)",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"subtitle\": \"Apenas o subtitulo mudou\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/posts/{{post_id}}/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"posts",
+								"{{post_id}}",
+								""
+							]
+						},
+						"description": "Atualizacao parcial. Exige token."
+					}
+				},
+				{
+					"name": "Delete post",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/posts/{{post_id}}/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"posts",
+								"{{post_id}}",
+								""
+							]
+						},
+						"description": "Remove a postagem. Exige token."
+					}
+				}
+			]
+		},
+		{
+			"name": "Comments",
+			"item": [
+				{
+					"name": "List comments",
+					"request": {
+						"method": "GET",
+						"auth": {
+							"type": "noauth"
+						},
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/comments/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"comments",
+								""
+							]
+						},
+						"description": "Lista comentarios. Leitura publica."
+					}
+				},
+				{
+					"name": "List comments by post",
+					"request": {
+						"method": "GET",
+						"auth": {
+							"type": "noauth"
+						},
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/comments/?post={{post_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"comments",
+								""
+							],
+							"query": [
+								{
+									"key": "post",
+									"value": "{{post_id}}"
+								}
+							]
+						},
+						"description": "Filtra comentarios por postagem (query param `post`). Leitura publica."
+					}
+				},
+				{
+					"name": "Create comment",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"comment\": \"Otimo post!\",\n    \"post\": {{post_id}}\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/comments/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"comments",
+								""
+							]
+						},
+						"description": "Cria comentario. `user` e definido automaticamente pelo usuario autenticado. Exige token."
+					}
+				},
+				{
+					"name": "Retrieve comment",
+					"request": {
+						"method": "GET",
+						"auth": {
+							"type": "noauth"
+						},
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/comments/{{comment_id}}/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"comments",
+								"{{comment_id}}",
+								""
+							]
+						},
+						"description": "Detalhe do comentario. Leitura publica."
+					}
+				},
+				{
+					"name": "Update comment (PUT)",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"comment\": \"Comentario editado\",\n    \"post\": {{post_id}}\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/comments/{{comment_id}}/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"comments",
+								"{{comment_id}}",
+								""
+							]
+						},
+						"description": "Atualiza o comentario. Exige token."
+					}
+				},
+				{
+					"name": "Partial update comment (PATCH)",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"comment\": \"So o texto mudou\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/comments/{{comment_id}}/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"comments",
+								"{{comment_id}}",
+								""
+							]
+						},
+						"description": "Atualizacao parcial. Exige token."
+					}
+				},
+				{
+					"name": "Delete comment",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/comments/{{comment_id}}/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"comments",
+								"{{comment_id}}",
+								""
+							]
+						},
+						"description": "Remove o comentario. Exige token."
+					}
+				}
+			]
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:8000",
+			"type": "string"
+		},
+		{
+			"key": "username",
+			"value": "admin",
+			"type": "string"
+		},
+		{
+			"key": "password",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "access_token",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "refresh_token",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "user_id",
+			"value": "1",
+			"type": "string"
+		},
+		{
+			"key": "category_id",
+			"value": "1",
+			"type": "string"
+		},
+		{
+			"key": "post_id",
+			"value": "1",
+			"type": "string"
+		},
+		{
+			"key": "comment_id",
+			"value": "1",
+			"type": "string"
+		}
+	]
+}

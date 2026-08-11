@@ -109,6 +109,9 @@ Ideias já mapeadas para a evolução do projeto:
   significado — não apenas por palavra exata como na busca atual (`title__icontains`).
   Ex.: encontrar posts sobre "receitas de sobremesa" mesmo sem essas palavras no texto.
 
+- **❤️ Engajamento**
+  Permitir e medir interações dos usuários com as postagens, como curtir, comentar, salvar e compartilhar
+
 - **🌍 Integração com API externa de endereços/localização**
   Consumir uma API externa para popular e validar **cidade, estado e país** do usuário
   (ex.: IBGE para cidades/estados do Brasil, REST Countries para países, ou ViaCEP para
